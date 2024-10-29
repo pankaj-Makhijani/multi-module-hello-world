@@ -10,20 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code with history
+      # Step 1: Checkout code with commit history
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2  # Fetch the last two commits
+          fetch-depth: 2  # Fetch the last two commits for change detection
 
-      # Step 2: Set up Java (optional if you need it for building)
+      # Step 2: Set up Java (required if building Java project)
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Step 3: Define Commit ID for Tagging
+      # Step 3: Set Commit ID for Tagging
       - name: Set Commit ID as Tag
         run: echo "COMMIT_ID=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
@@ -44,13 +44,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 6: Login to ACR
+      # Step 6: Install Azure CLI containerapp extension
+      - name: Install Azure CLI containerapp extension
+        run: |
+          az extension add --name containerapp --upgrade
+
+      # Step 7: Login to Azure Container Registry (if any service changed)
       - name: Login to Azure Container Registry
         if: env.HELLO_CHANGED == 'true' || env.WORLD_CHANGED == 'true'
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${{ secrets.ACR_NAME }}.azurecr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      # Step 7: Build, push, and deploy service-hello if changed
+      # Step 8: Build, push, and deploy service-hello if changed
       - name: Build and Push service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
@@ -68,7 +73,7 @@ jobs:
             --target-port 8080 \
             --ingress external
 
-      # Step 8: Build, push, and deploy service-world if changed
+      # Step 9: Build, push, and deploy service-world if changed
       - name: Build and Push service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
