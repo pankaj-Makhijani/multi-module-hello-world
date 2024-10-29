@@ -16,22 +16,11 @@ jobs:
         with:
           fetch-depth: 2  # Fetch the last two commits for change detection
 
-      # Step 2: Set up JDK (required if building Java project)
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      # Step 3: Build the project
-      - name: Build project with Maven
-        run: mvn clean package -DskipTests  # Skip tests for faster build
-
-      # Step 4: Set Commit ID for Tagging
+      # Step 2: Set Commit ID for Tagging
       - name: Set Commit ID as Tag
         run: echo "COMMIT_ID=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
-      # Step 5: Check which services changed
+      # Step 3: Check which services changed
       - name: Check changed files
         id: changes
         run: |
@@ -42,38 +31,38 @@ jobs:
             echo "WORLD_CHANGED=true" >> $GITHUB_ENV
           fi
 
-      # Step 6: Login to Azure
+      # Step 4: Login to Azure
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 7: Install Azure CLI containerapp extension
+      # Step 5: Install Azure CLI containerapp extension
       - name: Install Azure CLI containerapp extension
         run: |
           az extension add --name containerapp --upgrade
 
-      # Step 8: Login to Azure Container Registry (if any service changed)
+      # Step 6: Login to Azure Container Registry (if any service changed)
       - name: Login to Azure Container Registry
         if: env.HELLO_CHANGED == 'true' || env.WORLD_CHANGED == 'true'
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${{ secrets.ACR_NAME }}.azurecr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      # Step 9: Build and Push Docker Image for service-hello
+      # Step 7: Build and Push Docker Image for service-hello
       - name: Build and Push service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
           docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }} ./service-hello
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
 
-      # Step 10: Build and Push Docker Image for service-world
+      # Step 8: Build and Push Docker Image for service-world
       - name: Build and Push service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
           docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }} ./service-world
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }}
 
-      # Step 11: Deploy service-hello to Azure Container Apps
+      # Step 9: Deploy service-hello to Azure Container Apps
       - name: Deploy service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
@@ -82,7 +71,7 @@ jobs:
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
             --image ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
 
-      # Step 12: Deploy service-world to Azure Container Apps
+      # Step 10: Deploy service-world to Azure Container Apps
       - name: Deploy service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
