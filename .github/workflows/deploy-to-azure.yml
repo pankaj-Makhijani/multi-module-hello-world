@@ -66,16 +66,10 @@ jobs:
       - name: Deploy service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
-          az containerapp update \
-            --name javapochelloservice \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
+          az containerapp update --name javapochelloservice --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
 
       # Step 10: Deploy service-world to Azure Container Apps
       - name: Deploy service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
-          az containerapp update \
-            --name javapocworldservice \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }}
+          az containerapp update --name javapocworldservice --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }}
