@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
+          distribution: 'temurin'  # Specify the JDK distribution
 
       # Step 3: Define Commit ID for Tagging
       - name: Set Commit ID as Tag
