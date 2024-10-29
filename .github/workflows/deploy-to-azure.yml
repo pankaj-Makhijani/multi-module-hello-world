@@ -1,0 +1,84 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on push to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Java (optional if you need it for building)
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+
+      # Step 3: Define Commit ID for Tagging
+      - name: Set Commit ID as Tag
+        run: echo "COMMIT_ID=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+
+      # Step 4: Check which services changed
+      - name: Check changed files
+        id: changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q '^service-hello/'; then
+            echo "HELLO_CHANGED=true" >> $GITHUB_ENV
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -q '^service-world/'; then
+            echo "WORLD_CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      # Step 5: Login to Azure
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 6: Login to ACR
+      - name: Login to Azure Container Registry
+        if: env.HELLO_CHANGED == 'true' || env.WORLD_CHANGED == 'true'
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${{ secrets.ACR_NAME }}.azurecr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      # Step 7: Build, push, and deploy service-hello if changed
+      - name: Build and Push service-hello
+        if: env.HELLO_CHANGED == 'true'
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }} service-hello
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
+      - name: Deploy service-hello
+        if: env.HELLO_CHANGED == 'true'
+        run: |
+          az containerapp update \
+            --name javapochelloservice \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --environment ${{ secrets.CONTAINER_APP_ENVIRONMENT }} \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }} \
+            --min-replicas 1 --max-replicas 3 \
+            --target-port 8080 \
+            --ingress external
+
+      # Step 8: Build, push, and deploy service-world if changed
+      - name: Build and Push service-world
+        if: env.WORLD_CHANGED == 'true'
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }} service-world
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }}
+      - name: Deploy service-world
+        if: env.WORLD_CHANGED == 'true'
+        run: |
+          az containerapp update \
+            --name javapocworldservice \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --environment ${{ secrets.CONTAINER_APP_ENVIRONMENT }} \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }} \
+            --min-replicas 1 --max-replicas 3 \
+            --target-port 8081 \
+            --ingress external
