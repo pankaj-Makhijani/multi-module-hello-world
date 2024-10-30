@@ -52,14 +52,14 @@ jobs:
       - name: Build and Push service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }} ./service-hello
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }} -f ./service-hello/Dockerfile .
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-hello:${{ env.COMMIT_ID }}
 
       # Step 8: Build and Push Docker Image for service-world
       - name: Build and Push service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }} ./service-world
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }} -f ./service-world/Dockerfile .
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/service-world:${{ env.COMMIT_ID }}
 
       # Step 9: Deploy service-hello to Azure Container Apps
