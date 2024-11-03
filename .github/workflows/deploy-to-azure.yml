@@ -52,24 +52,24 @@ jobs:
       - name: Build and Push service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_1:${{ env.COMMIT_ID }} -f ./service-hello/Dockerfile .
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_1:${{ env.COMMIT_ID }}
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.CONTAINER_REGISTRY_1 }}:${{ env.COMMIT_ID }} -f ./service-hello/Dockerfile .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.CONTAINER_REGISTRY_1 }}:${{ env.COMMIT_ID }}
 
       # Step 8: Build and Push Docker Image for service-world
       - name: Build and Push service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_2:${{ env.COMMIT_ID }} -f ./service-world/Dockerfile .
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_2:${{ env.COMMIT_ID }}
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.CONTAINER_REGISTRY_2 }}:${{ env.COMMIT_ID }} -f ./service-world/Dockerfile .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ secrets.CONTAINER_REGISTRY_2 }}:${{ env.COMMIT_ID }}
 
       # Step 9: Deploy service-hello to Azure Container Apps
       - name: Deploy service-hello
         if: env.HELLO_CHANGED == 'true'
         run: |
-          az containerapp update --name CONTAINER_APP_ENVIRONMENT_1 --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_1:${{ env.COMMIT_ID }}
+          az containerapp update --name ${{ secrets.CONTAINER_APP_ENVIRONMENT_1 }} --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_1:${{ env.COMMIT_ID }}
 
       # Step 10: Deploy service-world to Azure Container Apps
       - name: Deploy service-world
         if: env.WORLD_CHANGED == 'true'
         run: |
-          az containerapp update --name CONTAINER_APP_ENVIRONMENT_2 --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_2:${{ env.COMMIT_ID }}
+          az containerapp update --name ${{ secrets.CONTAINER_APP_ENVIRONMENT_2 }} --resource-group ${{ secrets.RESOURCE_GROUP }} --image ${{ secrets.ACR_NAME }}.azurecr.io/CONTAINER_REGISTRY_2:${{ env.COMMIT_ID }}
