@@ -51,6 +51,7 @@ jobs:
       # Build and deploy the hello service
       - name: Build and deploy Hello Container App
         uses: azure/container-apps-deploy-action@v0
+        if: env.HELLO_CHANGED == 'true'
         with:          
           appSourcePath: ${{ github.workspace }}   
           acrName: ${{ secrets.ACR_NAME }}
@@ -65,6 +66,7 @@ jobs:
       # Build and deploy the world service
       - name: Build and deploy World Container App
         uses: azure/container-apps-deploy-action@v0
+        if: env.WORLD_CHANGED == 'true'
         with:          
           appSourcePath: ${{ github.workspace }}   
           acrName: ${{ secrets.ACR_NAME }}
